@@ -45,9 +45,9 @@ class Project(object):
         project_dirs_path["tokenized"] = "./" + self.project_name + "/" + self.project_dirs["text"]
         for dir in ["./" + self.project_name,"./" + self.project_name + "/row","./" + self.project_name + "/" + self.project_dirs["text"]]:
             pass
-            # os.mkdir("./" + dir)
+            os.mkdir("./" + dir)
         for dir in self.project_dirs["token"]:
-            # os.mkdir("./" + self.project_name + "/" + dir)
+            os.mkdir("./" + self.project_name + "/" + dir)
             project_dirs_path[dir] = "./" + self.project_name + "/" + dir
         return project_dirs_path
         
@@ -56,7 +56,7 @@ class TextPreprocessor(PreprocessorBase,metaclass=ABCMeta):
         self.text_processor = getattr(textprocess,"TextProcess"+module_name.capitalize())(module_name)
         self.token_processor = tokenprocess.TokenProcess()
         # self.processes = ["tokenize","row","corpus","frequency","tfidf","skipgram"]
-        self.processes = {"text":"mecab","token":["skipgram"]}
+        self.processes = {"text":"mecab","token":["tokenize","row","corpus","frequency","skipgram"]}
         super().__init__(resource_dir,project_name,self.processes)
     
     # @abstractmethod

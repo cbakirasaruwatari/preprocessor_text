@@ -14,5 +14,3 @@ class ExpTwitter(Exp):
     TAG_PATTERN=re.compile(r"(#[^\s]+)",flags=re.MULTILINE | re.DOTALL)
     REPLY_PATTERN=re.compile(r"^@([A-Za-z0-9_]+) ",flags=re.MULTILINE | re.DOTALL)
     USER_AT_PATTERN=re.compile(r"@([A-Za-z0-9_]+)",flags=re.MULTILINE | re.DOTALL)
-    
-    

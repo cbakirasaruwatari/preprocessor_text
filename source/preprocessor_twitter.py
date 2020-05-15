@@ -30,14 +30,14 @@ class PreprocessorTextTwitter(TextPreprocessor):
         super().__init__("twitter",resource_dir,Project_name)
 
     def user_to_vector_text(self):
-        # for file_name in self.files:
-        #     print(file_name + " processing to token...")
-        #     with open(file_name) as f:
-        #         result = []
-        #         for post in json.load(f):
-        #             result = result + self._process_text(json.loads(post["post"])["text"])
-        #         with open(self.project_dirs_path["tokenized"] + "/" + os.path.splitext(os.path.basename(file_name))[0] + ".json","w") as w:
-        #             json.dump(result,w,indent=4,ensure_ascii=False)
+        for file_name in self.files:
+            print(file_name + " processing to token...")
+            with open(file_name) as f:
+                result = []
+                for post in json.load(f):
+                    result = result + self._process_text(json.loads(post["post"])["text"])
+                with open(self.project_dirs_path["tokenized"] + "/" + os.path.splitext(os.path.basename(file_name))[0] + ".json","w") as w:
+                    json.dump(result,w,indent=4,ensure_ascii=False)
         self._process_token()
 
     def _process_text(self,text):
