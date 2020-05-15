@@ -1,0 +1,59 @@
+## see about spark and hadoop versions (http://mirrors.ukfast.co.uk/sites/ftp.apache.org/spark/)
+
+ARG OPEN_JDK_IMAGE_VERSION=8-alpine3.9
+ARG PYTHON_IMAGE_VERSION=3.8.1-alpine
+
+# Build stage spark
+FROM openjdk:${OPEN_JDK_IMAGE_VERSION} AS spark_build
+LABEL spark_build=true
+ENV APACHE_SPARK_VERSION=2.4.5
+ENV HADOOP_VERSION=2.7
+ENV MESOS_VERSION=1.9.0
+USER root
+WORKDIR /tmp
+RUN apk --update --no-cache --virtual=.build-deps add tar
+RUN wget -q http://mirrors.ukfast.co.uk/sites/ftp.apache.org/spark/spark-${APACHE_SPARK_VERSION}/spark-${APACHE_SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz && \
+    echo "2426a20c548bdfc07df288cd1d18d1da6b3189d0b78dee76fa034c52a4e02895f0ad460720c526f163ba63a17efae4764c46a1cd8f9b04c60f9937a554db85d2 *spark-${APACHE_SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz" | sha512sum -c - && \
+    tar xzf spark-${APACHE_SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz -C /usr/local --owner root --group root --no-same-owner && \
+    rm spark-${APACHE_SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz
+
+## mesos
+RUN apk --update --no-cache add --virtual build-deps \
+    alpine-sdk \
+    libtool \
+    make \
+    patch \
+    g++ \
+    subversion-dev \
+    zlib-dev \
+    curl-dev \
+    apr-dev \
+    linux-headers \
+    python-dev \
+    fts-dev \
+    cyrus-sasl-dev \
+    cyrus-sasl-crammd5 \
+ && mkdir -p /tmp/target \
+ && curl -sL http://www.apache.org/dist/mesos/${MESOS_VERSION}/mesos-${MESOS_VERSION}.tar.gz \
+    | gunzip \
+    | tar x -C /tmp/ \
+ && cd /tmp/mesos-${MESOS_VERSION} \
+ && ./configure --disable-java --prefix /tmp/target \
+ && make install -j5 \
+ && apk del build-dependencies
+
+
+# Runtime stage
+FROM python:${PYTHON_IMAGE_VERSION} AS spark_base_python
+ENV APACHE_SPARK_VERSION=2.4.5
+ENV HADOOP_VERSION=2.7
+COPY --from=spark_build /usr/local/spark-${APACHE_SPARK_VERSION}-bin-hadoop${HADOOP_VERSION} /usr/local/spark-${APACHE_SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}
+RUN cd /usr/local && ln -s /usr/local/spark-${APACHE_SPARK_VERSION}-bin-hadoop${HADOOP_VERSION} spark
+ENV SPARK_HOME=/usr/local/spark \
+    PYTHONPATH=$SPARK_HOME/python:$SPARK_HOME/python/lib/py4j-0.10.7-src.zip \
+    MESOS_NATIVE_LIBRARY=/usr/local/lib/libmesos.so \
+    SPARK_OPTS="--driver-java-options=-Xms1024M --driver-java-options=-Xmx4096M --driver-java-options=-Dlog4j.logLevel=info" \
+    PATH=$PATH:/usr/local/spark/bin
+
+# RUN pip install  'pyarrow==0.16.0' 
+# USER $NB_UID

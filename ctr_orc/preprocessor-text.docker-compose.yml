@@ -1,0 +1,33 @@
+version: '3'
+services:
+  preprocesor-text:
+    hostname: preprocesor-text
+    container_name: preprocesor-text
+    build:
+      context: ../ctr/preprocessor_text
+      dockerfile: preprocessor-text.Dockerfile
+    user: root
+    # environment:
+    # env_file:
+    #   - ./.env
+    volumes:
+       - "../source:/home/source" 
+       - "../data:/home/data"        
+    privileged: true
+    tty: true
+    # ports:
+    #   - "8888:8888"
+    # restart: unless-stopped
+    # command: start.sh jupyter lab --NotebookApp.token=''
+  # embulk:
+  #   hostname: embulk
+  #   build:    
+  #     context: .
+  #     dockerfile: embulk.Dockerfile
+  #   user: root
+  #   env_file:
+  #     - ./.env
+  #   volumes:
+  #     - "./embulk:/work/etl/embulk"
+  #     - "./data:/work/etl/data"
+  #   tty: true
