@@ -5,19 +5,17 @@ from __future__ import unicode_literals
 import os
 import sys
 import json
-import logging
-import time
-import traceback
 import pathlib
-from preprocessor_base import TextPreprocessor
-from preprocessor_log import clslog
-from util import load_json,load_yaml
 from logging import getLogger
 import pickle
+from tqdm import tqdm
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
 from sklearn.cluster import KMeans
+
+from preprocessor_base import TextPreprocessor
+from log import clslog
+from util import load_json,load_yaml
 
 
 logger = getLogger(os.path.abspath(__file__))

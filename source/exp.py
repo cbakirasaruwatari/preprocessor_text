@@ -1,8 +1,7 @@
 from __future__ import unicode_literals
-#!/usr/bin/env python3
+#!/usr/bin/env python3.8
 # -*- coding: utf-8 -*-
 import re
-from typing import Optional,Union,NewType,Tuple, List, Any, Dict, Callable, Generic, NoReturn
 
 class Exp:
     URL_PATTERN=re.compile(r"http\S+")
