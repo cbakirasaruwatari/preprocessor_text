@@ -1,25 +1,14 @@
 from __future__ import unicode_literals
-#!/usr/bin/env python3
+#!/usr/bin/env python3.8
 # -*- coding: utf-8 -*-
 
 import os
 import sys
-import random
 import json
-import re
 import logging
 import time
 import traceback
-import configparser
-from abc import ABCMeta, abstractmethod
-import inspect
-import re
-import unicodedata
-import functools
 import pathlib
-import math
-# from collections import namedtuple
-import queue
 from preprocessor_base import TextPreprocessor
 from preprocessor_log import clslog
 from util import load_json,load_yaml
@@ -28,7 +17,7 @@ import pickle
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-# from sklearn.feature_extraction.text import TfidfVectorizer,CountVectorizer
+from sklearn.cluster import KMeans
 
 
 logger = getLogger(os.path.abspath(__file__))
@@ -38,7 +27,7 @@ class PreprocessorTextTwitter(TextPreprocessor):
     def __init__(self,yaml_path):
         super().__init__("twitter",yaml_path)
 
-    def user_to_vector(self):
+    def _user_to_vector(self):
         for path in self.project.resource_path.iterdir():
             print(str(path) + " processing to token...")
             with open(path) as f:
@@ -51,11 +40,9 @@ class PreprocessorTextTwitter(TextPreprocessor):
         self._calc_avg_vectors()
 
     def _calc_avg_vectors(self):
-        output_path = self.project.destination_path["result"] / pathlib.Path("_result.vec")
+        output_path = self.project.destination_path["result"] / pathlib.Path("users.vec")
         if os.path.exists(output_path):
             raise FileExistsError
-        # TODO stop_wardsに入っているものは計算から除外する
-        stop_wards = ["<BOS>","<EOS>","する","てる","なる","ある","の","ない","いる","RT","れる","の","もの","せる","これ","てる","こと","ん","それ"]
         # read skipgram
         vector_path = self.project.destination_path["token_skipgram"] / pathlib.Path("skipgram.vec")
         with open(vector_path) as r:
@@ -86,7 +73,8 @@ class PreprocessorTextTwitter(TextPreprocessor):
                     print(e)
                     print(file)
                     continue
-
+        
+        return output_path
     
     def _process_text(self,text):
         result = self.text_processor.set(text).normalize().remove_emoji().remove_url().remove(
@@ -104,14 +92,16 @@ class PreprocessorTextTwitter(TextPreprocessor):
             else:
                 getattr(self.token_processor,process)(self.project.destination_path["text_mecab"],self.project.destination_path["token_" + process])
     
-    def _cluster_user_vector(self):
-        raise NotImplementedError
+    def _cluster_user_vector(self,path):
+        n_clusters = 20
+        df = pd.read_csv(path,skiprows=1,header=None,delimiter=" ")
+        df["kmeans"] = KMeans(n_clusters=n_clusters,init='k-means++',n_init=20,random_state=1919).fit_predict(df.drop(df.columns[[0]],axis=1).values)
+        df[[0,"kmeans"]].to_csv( self.project.destination_path["result"] / pathlib.Path("user_kmeans.csv"),header=False)
     
-    def run(self):
-        raise NotImplementedError
+    def run(self,path):
+        self._cluster_user_vector(self._user_to_vector())
 
 if __name__ == "__main__":
-
     text = PreprocessorTextTwitter("config.yml")
-    text.user_to_vector()
+    text.cluster_user_vector("aaa")
     # text.tfidf()
