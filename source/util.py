@@ -5,6 +5,7 @@ import sys
 import json
 import os
 import configparser
+import yaml
 import itertools
 
 def _getprop(func):
@@ -28,16 +29,34 @@ def deleter(func):
         return property(None, None, func)
     return prop.setter(func)
 
-def config(path):
-    if os.path.isfile(path) is False:
-        raise FileNotFoundError("設定ファイルがないよ")
-    cfg = configparser.ConfigParser(os.environ)
-    cfg.read(path)
+# def config(path):
+#     if os.path.isfile(path) is False:
+#         raise FileNotFoundError("設定ファイルがないよ")
+#     cfg = configparser.ConfigParser(os.environ)
+#     cfg.read(path)
 
-    return cfg
+    # return cfg
 
 def flatten(li):
     return list(itertools.chain.from_iterable(li))
+
+def exception_handler(func,is_return=False,exp=Exception, handle=lambda x : x, *args, **kwargs):
+    try:
+        return func(*args, **kwargs)
+    except exp as e:
+        if is_return:
+            return(e)
+        else:
+            pass
+
+def load_json(path):
+    with open(path) as r:
+      result = json.load(r)
+    return result
+
+def load_yaml(path):
+    with open(path) as r:
+        return yaml.load(r, Loader=yaml.SafeLoader)
 
 
 # def log_info_cls(cls):

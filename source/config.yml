@@ -1,0 +1,42 @@
+version: 0
+project:
+    name: test
+    resource_path: ./twitter_data
+    kind: text
+    domain: twitter
+    processes:
+        text: mecab
+        token:
+            - corpus
+            - frequency
+            - skipgram
+            - tfidf
+# settings:
+#     text:
+#         filter:
+#             - 名詞
+#             - 動詞
+#             - 形容詞
+#     token: 
+#         tfidf: sklearn
+#     result: 
+#         stopwards: 
+#             - <BOS>
+#             - <EOS>
+#             - する
+#             - てる
+#             - なる
+#             - ある
+#             - の
+#             - ない
+#             - いる
+#             - RT
+#             - れる
+#             - の
+#             - もの
+#             - せる
+#             - これ
+#             - てる
+#             - こと
+#             - ん
+#             - それ

@@ -22,7 +22,7 @@ def clslog(logger):
                 return result
             return inner    
         for name, method in cls.__dict__.items():
-            if not name.startswith('__'):
+            if not name.startswith('_'):
                 setattr(cls, name, deco_method(method))
         return cls
     return log

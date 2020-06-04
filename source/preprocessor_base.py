@@ -4,64 +4,97 @@ from __future__ import unicode_literals
 
 import os
 import sys
-import random
 import pathlib
 import json
-import re
-import logging
-import time
-import traceback
-import configparser
 from abc import ABCMeta, abstractmethod
-import inspect
 import re
-import unicodedata
-import functools
-from typing import (Any)
+from typing import Callable
 from dataclasses import dataclass
-# from collections import namedtuple
-import queue
+from collections import deque
 import textprocess
 import tokenprocess
-from abc import ABCMeta, abstractmethod
-
+from util import getter,setter,load_yaml
 
 class PreprocessorBase(metaclass=ABCMeta):
-    def __init__(self,resource_dir,project_name,processes):
-        self.resource_dir = resource_dir
-        self.files = [resource_dir + "/" + f for f in os.listdir(resource_dir) if os.path.isfile(os.path.join(resource_dir, f))]
-        self.project_name = project_name
-        self.project = Project(project_name,processes)
-        self.project_dirs_path = self.project.create()
+    @dataclass(frozen=True)
+    class Settings:
+        pj_name: str
+        resource_path: pathlib.Path
+        kind: str
+        domain: str
+        processes: dict
+        def __post_init__(self):
+            self._validate()
+        def _validate(self):
+            # TODO processes field must be validated.
+            if self.kind not in (kind_supported := ["text"]):
+                raise NotImplementedError("kind field must be " + str(kind_supported))
+            elif self.domain not in (domain_supported := ["twitter"]):
+                raise NotImplementedError("domain field must be " + str(domain_supported))
 
-    
-class Project(object):
-    def __init__(self,name,dirs):
-        self.project_name = name
-        self.project_dirs = dirs
+    class Procedure:
+        def __init__(self,settings,func):
+            self.task:dict = settings.processes
+            self.validate_func: Callable = func
+            self._validate()
+        def _validate(self):
+            self.validate_func(self.task)
+
+    class Project:
+        def __init__(self,settings):
+            self.name:str = settings.pj_name
+            self.processes:dict = settings.processes
+            self.resource_path:pathlib.Path = settings.resource_path
+            self.destination_path:dict
+            self._create()
+
+        def _create(self):
+            dirs = {}
+            for v in ["/others","/result"]:
+                # os.makedirs(pathlib.Path(self.name +v))
+                dirs[v[1:]] = pathlib.Path(self.name +v).resolve()
+
+            for k,v in self.processes.items():
+                if type(v) == str:
+                    dirs[k + "_" + v] = self._create_dir(k,v)
+                else:
+                    for v2 in v:
+                        dirs[k + "_" + v2] = self._create_dir(k,v2)
+            self.destination_path = dirs
+            print(self.destination_path)
         
-    def create(self):
-        project_dirs_path = {}
-        project_dirs_path["tokenized"] = "./" + self.project_name + "/" + self.project_dirs["text"]
-        for dir in ["./" + self.project_name,"./" + self.project_name + "/row","./" + self.project_name + "/" + self.project_dirs["text"]]:
-            pass
-            os.mkdir("./" + dir)
-        for dir in self.project_dirs["token"]:
-            os.mkdir("./" + self.project_name + "/" + dir)
-            project_dirs_path[dir] = "./" + self.project_name + "/" + dir
-        return project_dirs_path
+        def _create_dir(self,k,v):
+            dir = pathlib.Path(self.name + "/" + k + "process" + "/" + v)
+            # os.makedirs(dir)
+            return dir.resolve()
+            
+
+    def __init__(self,setting_path):
+        self.setting_path = setting_path
+        yaml = load_yaml(setting_path)
+        self.settings = self.Settings(
+            yaml["project"]["name"],
+            pathlib.Path(yaml["project"]["resource_path"]).resolve(),
+            yaml["project"]["kind"],
+            yaml["project"]["domain"],
+            yaml["project"]["processes"])
+        self.project = self.Project(self.settings)
+        self.procedure = self.Procedure(self.settings,self._validate_processes)    
+        
+    @abstractmethod
+    def _validate_processes(self,task):
+       raise  NotImplementedError
         
 class TextPreprocessor(PreprocessorBase,metaclass=ABCMeta):
-    def __init__(self,module_name,resource_dir,project_name):
+    def __init__(self,module_name,setting_path):
         self.text_processor = getattr(textprocess,"TextProcess"+module_name.capitalize())(module_name)
         self.token_processor = tokenprocess.TokenProcess()
-        # self.processes = ["tokenize","row","corpus","frequency","tfidf","skipgram"]
-        self.processes = {"text":"mecab","token":["tokenize","row","corpus","frequency","skipgram"]}
-        super().__init__(resource_dir,project_name,self.processes)
+        super().__init__(setting_path)
     
-    # @abstractmethod
-    # def run(self):
-    #     raise NotImplementedError
+    def _validate_processes(self,task):
+        # TODO 実装
+        print(task)
+
     @abstractmethod
     def _process_token(self):
         raise NotImplementedError
