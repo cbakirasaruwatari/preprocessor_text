@@ -4,6 +4,7 @@ project:
     resource_path: ./twitter_data
     kind: text
     domain: twitter
+    debug: True
     processes:
         text: mecab
         token:
@@ -11,12 +12,39 @@ project:
             - frequency
             - skipgram
             - tfidf
-# settings:
-#     text:
-#         filter:
-#             - 名詞
-#             - 動詞
-#             - 形容詞
+        result: 
+            Method: kmeans
+
+settings:
+    text:
+        normalization: True
+        excludeFromRow:
+            - EMOJI
+            - URL
+            - RT
+            - RT_INFORMAL
+            - TAG
+            - REPLY
+            - USER_AT
+        filterPartOfSpeach: 名詞 動詞 形容詞
+    token: 
+        frequencyLowerLimitation: 10
+        whichTfidf: sklearn
+        wordEmbedding: 
+            method: skipgram
+            ### Inout Original Fasttext option. ###
+            option: -minCount 10 -epoch 10 -neg 100 
+        CorpusStopWards: BOS,EOS,する,てる,なる,ある,の,ない,いる,RT,れる,の,もの,せる,これ,てる,こと,ん,それ
+    Result:
+        avgVector:
+            method: upperCount
+            number: 100
+            stopWards: BOS,EOS,する,てる,なる,ある,の,ない,いる,RT,れる,の,もの,せる,これ,てる,こと,ん,それ
+        clsutering:
+            number: 20
+
+    
+
 #     token: 
 #         tfidf: sklearn
 #     result: 
